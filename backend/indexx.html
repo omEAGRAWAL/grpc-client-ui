@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>gRPC WebSocket Client</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #output { white-space: pre-wrap; background: #f0f0f0; padding: 10px; height: 300px; overflow-y: scroll; border: 1px solid #ccc; }
+        #status { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+<h2>gRPC Streaming via WebSocket</h2>
+<div id="status">Connecting...</div>
+<div id="output"></div>
+
+<script>
+    const ws = new WebSocket("ws://localhost:8081/grpc-stream");
+    const statusEl = document.getElementById("status");
+    const outputEl = document.getElementById("output");
+
+    ws.onopen = () => {
+        statusEl.textContent = "Connected";
+
+        const message = {
+            target: "localhost:50051",
+            service: "user.UserService",
+            method: "ListUsers",
+            message: {},
+            timeout_sec: 30
+
+        };
+
+        ws.send(JSON.stringify(message));
+        appendOutput("Sent request:\n" + JSON.stringify(message, null, 2));
+    };
+
+    ws.onmessage = (event) => {
+        appendOutput("Received:\n" + event.data);
+    };
+
+    ws.onerror = (err) => {
+        statusEl.textContent = "Error: " + err.message;
+    };
+
+    ws.onclose = () => {
+        statusEl.textContent = "Connection closed";
+    };
+
+    function appendOutput(text) {
+        outputEl.textContent += text + "\n\n";
+        outputEl.scrollTop = outputEl.scrollHeight;
+    }
+</script>
+</body>
+</html>

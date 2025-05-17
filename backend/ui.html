@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>gRPC Client UI</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        label, select, input, textarea { display: block; margin: 0.5em 0; width: 100%; }
+        textarea { height: 150px; }
+        .response { white-space: pre-wrap; background: #f4f4f4; padding: 1em; border: 1px solid #ccc; margin-top: 1em; }
+    </style>
+</head>
+<body>
+<h1>gRPC Client UI</h1>
+
+<section>
+    <h2>1. Upload Proto</h2>
+    <input type="file" id="protoFile" />
+    <button onclick="uploadProto()">Upload</button>
+</section>
+
+<section>
+    <h2>2. Add Import Path</h2>
+    <input type="text" id="importPath" placeholder="/path/to/import" />
+    <button onclick="addImportPath()">Add</button>
+</section>
+
+<section>
+    <h2>3. Load Services</h2>
+    <button onclick="loadServices()">Load</button>
+    <select id="serviceList"></select>
+    <select id="methodList"></select>
+</section>
+
+<section>
+    <h2>4. Call gRPC Method</h2>
+    <input type="text" id="target" placeholder="localhost:50051" />
+    <textarea id="requestBody" placeholder="{\n  \"field\": \"value\"\n}"></textarea>
+    <input type="number" id="timeout" placeholder="Timeout (seconds)" value="5" />
+    <select id="callType">
+        <option value="unary">Unary (/grpc-call)</option>
+        <option value="stream">Stream (/grpc-stream)</option>
+    </select>
+    <button onclick="invokeGrpc()">Send</button>
+    <div class="response" id="responseArea"></div>
+</section>
+
+<script>
+    async function uploadProto() {
+        const file = document.getElementById("protoFile").files[0];
+        const formData = new FormData();
+        formData.append("proto", file);
+        const res = await fetch("/load-proto", { method: "POST", body: formData });
+        const data = await res.json();
+        alert(JSON.stringify(data));
+    }
+
+    async function addImportPath() {
+        const path = document.getElementById("importPath").value;
+        const res = await fetch("/add-import", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path }),
+        });
+        const data = await res.json();
+        alert(JSON.stringify(data));
+    }
+
+    async function loadServices() {
+        const res = await fetch("/services");
+        const services = await res.json();
+        const serviceSelect = document.getElementById("serviceList");
+        const methodSelect = document.getElementById("methodList");
+
+        serviceSelect.innerHTML = "";
+        methodSelect.innerHTML = "";
+        services.forEach(svc => {
+            const option = document.createElement("option");
+            option.value = svc.service;
+            option.textContent = svc.service;
+            serviceSelect.appendChild(option);
+        });
+        serviceSelect.onchange = () => {
+            const selected = services.find(s => s.service === serviceSelect.value);
+            methodSelect.innerHTML = "";
+            selected.methods.forEach(m => {
+                const opt = document.createElement("option");
+                opt.value = m;
+                opt.textContent = m;
+                methodSelect.appendChild(opt);
+            });
+        };
+        serviceSelect.onchange();
+    }
+
+    async function invokeGrpc() {
+        const target = document.getElementById("target").value;
+        const service = document.getElementById("serviceList").value;
+        const method = document.getElementById("methodList").value;
+        const message = document.getElementById("requestBody").value;
+        const timeout = parseInt(document.getElementById("timeout").value);
+        const callType = document.getElementById("callType").value;
+        const body = JSON.stringify({ target, service, method, message: JSON.parse(message), timeout_sec: timeout });
+
+        const res = await fetch(callType === 'unary' ? "/grpc-call" : "/grpc-stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body
+        });
+
+        if (callType === 'unary') {
+            const data = await res.text();
+            document.getElementById("responseArea").textContent = data;
+        } else {
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let result = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                result += decoder.decode(value);
+                document.getElementById("responseArea").textContent = result;
+            }
+        }
+    }
+</script>
+</body>
+</html>
