@@ -289,108 +289,15 @@ func handleGrpcStreamHTTP(c *gin.Context) {
 	}
 }
 
-//func handleGrpcStream(c *gin.Context) {
-//	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-//	if err != nil {
-//		return
-//	}
-//	defer conn.Close()
-//
-//	_, msgBytes, err := conn.ReadMessage()
-//	if err != nil {
-//		conn.WriteJSON(gin.H{"error": "Failed to read initial message"})
-//		return
-//	}
-//
-//	var req struct {
-//		Target     string          `json:"target"`
-//		Service    string          `json:"service"`
-//		Method     string          `json:"method"`
-//		Message    json.RawMessage `json:"message"`
-//		TimeoutSec int             `json:"timeout_sec"`
-//	}
-//	if err := json.Unmarshal(msgBytes, &req); err != nil {
-//		conn.WriteJSON(gin.H{"error": "Invalid request payload"})
-//		return
-//	}
-//
-//	grpcConn, err := grpc.Dial(req.Target, grpc.WithInsecure())
-//	if err != nil {
-//		conn.WriteJSON(gin.H{"error": "Failed to connect to gRPC server"})
-//		return
-//	}
-//	defer grpcConn.Close()
-//
-//	fileDesc, err := desc.CreateFileDescriptorFromSet(&descriptorSet)
-//	if err != nil {
-//		conn.WriteJSON(gin.H{"error": "Descriptor parsing failed"})
-//		return
-//	}
-//
-//	var svc *desc.ServiceDescriptor
-//	var mtd *desc.MethodDescriptor
-//	for _, s := range fileDesc.GetServices() {
-//		if s.GetFullyQualifiedName() == req.Service {
-//			svc = s
-//			mtd = s.FindMethodByName(req.Method)
-//			break
-//		}
-//	}
-//	if svc == nil || mtd == nil || !mtd.IsServerStreaming() {
-//		conn.WriteJSON(gin.H{"error": "Streaming method not found"})
-//		return
-//	}
-//
-//	inputMsg := dynamic.NewMessage(mtd.GetInputType())
-//	if err := inputMsg.UnmarshalJSON(req.Message); err != nil {
-//		conn.WriteJSON(gin.H{"error": "Invalid message format"})
-//		return
-//	}
-//
-//	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.TimeoutSec)*time.Second)
-//	defer cancel()
-//
-//	md := metadata.New(nil)
-//	ctx = metadata.NewOutgoingContext(ctx, md)
-//	//stub := grpcConn.NewStream
-//	//stream, err := grpc.NewClientStream(ctx, *grpc.StreamDesc{
-//	//	StreamName:    mtd.GetName(),
-//	//	ServerStreams: true,
-//	//	ClientStreams: false,
-//	//}, grpcConn, "/"+req.Service+"/"+req.Method)
-//	//if err != nil {
-//	//	conn.WriteJSON(gin.H{"error": "Failed to open stream: " + err.Error()})
-//	//	return
-//	//}
-//	streamDesc := &grpc.StreamDesc{
-//		StreamName:    mtd.GetName(),
-//		ServerStreams: true,
-//		ClientStreams: false,
-//	}
-//
-//	stream, err := grpc.NewClientStream(ctx, streamDesc, grpcConn, "/"+req.Service+"/"+req.Method)
-//	if err != nil {
-//		conn.WriteJSON(gin.H{"error": "Failed to open stream: " + err.Error()})
-//		return
-//	}
-//
-//	if err := stream.SendMsg(inputMsg); err != nil {
-//		conn.WriteJSON(gin.H{"error": "SendMsg failed: " + err.Error()})
-//		return
-//	}
-//	stream.CloseSend()
-//
-//	// Stream responses using goroutine
-//	go func() {
-//		for {
-//			resp := dynamic.NewMessage(mtd.GetOutputType())
-//			if err := stream.RecvMsg(resp); err != nil {
-//				conn.WriteJSON(gin.H{"end": true, "error": err.Error()})
-//				fmt.Println("printed")
-//				return
-//			}
-//			data, _ := resp.MarshalJSON()
-//			conn.WriteMessage(websocket.TextMessage, data)
-//		}
-//	}()
-//}
+func HandleGrpcStreamServer() {
+
+	// This function is not used in the current implementation
+	// but can be used to handle gRPC streaming server calls.
+	// You can implement your own logic here if needed.
+	// For example, you can create a gRPC server and register
+	// your service handlers to handle streaming calls.
+	// This is a placeholder for future implementation.
+	// You can implement your own logic here if needed.
+	//WRITE CODE
+
+}
